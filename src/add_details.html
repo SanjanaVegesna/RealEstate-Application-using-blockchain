@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AddProperty</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+
+
+    <script src="https://unpkg.com/ipfs-api/dist/index.js"></script>
+    <!--  <script src="https://cdn.jsdelivr.net/npm/buffer@5.1.0/index.min.js"></script> -->
+    <script src="https://unpkg.com/ipfs/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ipfs/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js"></script>
+    <script src="https://www.jsdelivr.com/package/npm/ipfs-http-client"
+integrity="sha384-5bXRcW9kyxxnSMbOoHzraqa7Z0PQWIao+cgeg327zit1hz5LZCEbIMx/LWKPReuB"
+crossorigin="anonymous"></script>
+    <!-- <script src="https://wzrd.in/standalone/buffer"></script>
+ -->
+    <script src="https://unpkg.com/ipfs-api@9.0.0/dist/index.js" integrity="sha384-5bXRcW9kyxxnSMbOoHzraqa7Z0PQWIao+cgeg327zit1hz5LZCEbIMx/LWKPReuB" crossorigin="anonymous"></script>
+
+
+<!-- Latest compiled JavaScript -->
+<link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css">
+<link href="https://fonts.googleapis.com/css2?family=Train+One&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js" ></script>
+<style>
+    body{
+        background-image: linear-gradient(to bottom, rgba(255,255,255,0.6) 100%,rgba(255,255,255,0.9) 100%), url(house4.jpg) ; 
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+        font-family: sans-serif;
+        font-size: medium;
+        
+    }
+    #main
+    {
+        margin-top:20px;
+        font-family: 'Roboto Slab', serif;
+        margin-bottom: 30px;
+    }
+    .content
+    {
+        max-width: 500px;
+        margin: auto;
+    }
+    #view_prop
+    {
+        
+        margin: auto;
+        margin-left: 140px;
+    }
+    #file
+    {
+  position: relative;
+  
+}
+#file1 {
+  position: absolute;
+  
+  opacity: 0;
+  right: 0;
+  top: 0;
+}
+#modaldialogid{
+  max-width: 800px;
+}
+
+
+</style>
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script><!--change1-->
+<script language="javascript" type="text/javascript" src="./abi.js"></script>
+  <script>
+    var contract_address;
+    var contract_abi;  
+    window.ethereum.on('accountsChanged', function (accounts) {
+  // Time to reload your interface with accounts[0]!
+      //alert("detected change in metamask account");
+      window.location.reload();
+    })
+     window.addEventListener('load', async () => {
+
+    // Modern dapp browsers...
+    if (window.ethereum) {//metamask allows you to connect to the block chain, read and write data to and from block chain using web3 js, by providing a global interface.
+
+      //MetaMask injects a global API into websites visited by its users at window.ethereum. This API allows websites to request users' Ethereum accounts, read data from blockchains the user is connected to.
+
+      //web3 provider allows you to comuunicate with ethereum blockchain
+
+      window.web3 = new Web3(ethereum);
+      try {
+
+        await ethereum.enable();
+        const account = await web3.eth.getAccounts();
+        const accountAddress = await account[0];
+
+        var xobj = await new XMLHttpRequest();
+        await xobj.overrideMimeType("application/json");
+        await xobj.open('GET', './PropertyList.json', false);
+        await xobj.send();
+
+        var contract_json = JSON.parse(xobj.responseText);
+        console.info(contract_json);
+
+        var contract_net = contract_json['networks'];
+        var net_keys = [];
+
+        for (var k in contract_net)
+        {
+            net_keys.push(k);
+        }
+
+        contract_address = contract_net[net_keys[net_keys.length-1]]['address'];
+        console.info(contract_address);
+        contract_abi = contract_json['abi'];
+        console.info(contract_abi);
+
+
+      } catch (error) {
+        // User denied account access...
+      }
+
+    }
+    // Non-dapp browsers...
+    else {
+      console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+    }
+  });
+  </script>
+<script>
+      const ipfs = window.IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
+
+    var fileHash = "";
+
+    const onFileUploadFunc = async (evt) => {
+        var file = evt.files[0];
+        console.info(file);
+
+        const buffer = await file.arrayBuffer();
+        console.info(buffer);
+        //alert(ret);
+       // var data = ret.result;
+
+
+        Buffer = window.IpfsApi().Buffer;
+
+        const buf = Buffer.from(buffer);
+        console.info(buf);
+        const files = [
+          {
+            path: file.name,
+            content:buf
+
+          }
+        ]
+
+        const files1 = [
+          {
+            path: file.name,
+            content:buffer
+
+          }
+        ]
+
+        //ret = await ipfs.add(files);
+        ret = await ipfs.add(files);
+        console.info(ret['cid']['string']);
+        fileHash = await ret['cid']['string'];
+
+
+        console.info("finished")
+
+    }
+
+    const contractAddProperty = async () => {
+
+         var psize = document.forms["frm1"]["psize"].value;
+          var ploc = document.forms["frm1"]["ploc"].value;
+          var pprice = document.forms["frm1"]["pprice"].value;
+
+          
+          
+
+
+
+          const account = await web3.eth.getAccounts();
+          const accountAddress = await account[0];
+
+          console.info("file hash before adding property");
+          console.info(fileHash);
+
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+          console.info(contract);
+
+          let message = await contract.methods.addProperty(psize, ploc, pprice, fileHash).send({from:accountAddress});
+          return message;
+    }
+    
+    const contractViewMyPropertyList = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            var i_prop_plotSize = await i_prop.plotSize;//change 2
+            var i_prop_location = await i_prop.location; //change 6
+            var i_prop_price = await i_prop.price; //change 7
+            if (i_prop_owner === accountAddress)
+            {
+                prop_arr.push(i_prop.propId); //change 4
+                prop_arr.push(i_prop_owner); //change 5
+                prop_arr.push(i_prop_plotSize);//change 3
+                prop_arr.push(i_prop_location); //change 8
+                prop_arr.push(i_prop_price); //change 9
+
+            }
+          }
+
+          return prop_arr;
+    }
+
+    const contractViewAllPropertyList = async () => {
+
+          const account = await web3.eth.getAccounts();//gives you the current account running on metamask
+          var accountAddress = await account[0];
+          //alert(account);
+          contract = new web3.eth.Contract(contract_abi, contract_address);//we're now creating an onstance of smart contract to interact with it; contract_address is the address of smart contract to be called,smart contract is deployed on clicking truffle migrate, so we get the address where the smart contract is deployed. contract_abi is json interface for a respective smart contract, it is used for communication between 2 modules, one being our smart contract and other being our frontend code, abi basically encodes the solidity calls and then decodes the data received on calling a function written in solidity.
+
+          //ABI: A list of the contract's functions and arguments (in JSON1 format).
+
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+          //alert("starstar");
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            var i_prop_plotSize = await i_prop.plotSize;//change 2
+            var i_prop_location = await i_prop.location; //change 6
+            var i_prop_price = await i_prop.price; //change 7
+            var i_prop_sell = await i_prop.sell;
+            //alert("property list val");
+            //alert(i_prop_list);
+            if (!(i_prop_owner === accountAddress) && i_prop_sell == true)
+            {
+                prop_arr.push(i_prop.propId); //change 4
+                prop_arr.push(i_prop_owner); //change 5
+                prop_arr.push(i_prop_plotSize);//change 3
+                prop_arr.push(i_prop_location); //change 8
+                prop_arr.push(i_prop_price); //change 9
+
+            }
+          }
+
+          //document.write(prop_arr);
+          //alert(prop_arr);
+          return prop_arr;
+    }
+
+    const contractBuyProperty = async (propId) => {
+
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+          //var propId = document.forms["frm3"]["propId"].value;
+
+          var i_prop = await contract.methods.propList(propId).call();
+          var i_price = await i_prop.price;
+          var i_prop_owner = await i_prop.owner;
+
+
+          let message = await contract.methods.buyProperty(propId).send({from:accountAddress, value:web3.utils.toWei(String(i_price), 'ether'), to:i_prop_owner});
+
+          //let message = await contract.methods.buyProperty(propId).send({from:accountAddress});
+
+          return "Bought Property";
+    }
+
+    const contractGetPropDeed = async (propId) => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          console.info("debug checking...");
+          console.info(contract_abi);
+          console.info(contract_address);
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+
+          console.info("prop Id");
+          console.info(propId);
+
+          var i_deed_val = await contract.methods.getPropertyDeedById(propId).call({from:accountAddress});
+
+          console.info(i_deed_val);
+          //let message = await contract.methods.buyProperty(propId).send({from:accountAddress});
+
+          return i_deed_val;
+    }
+    
+    const addPropertyFunc = async() => {
+        //alert("**came here**");
+
+        //alert("stop1");
+        var psize = document.forms["frm1"]["psize"].value;
+          var prate = document.forms["frm1"]["prate"].value;
+          
+          var pprice = document.forms["frm1"]["pprice"].value;
+
+          var pdeed = document.forms["frm1"]["actual-btn"].value;
+          var plat = document.forms["frm1"]["lat"].value;
+          var plon = document.forms["frm1"]["lon"].value;
+          //alert(psize);
+          //alert(prate);
+          var elm = document.getElementById("addpropmodalid");
+          elm.innerHTML = "<b>In Progress...</b>"
+          //alert(psize);
+          //alert(prate);
+          if(psize<=0)
+          {
+            elm.innerHTML = "<b>Please enter Valid Property Size</b>";
+            return;
+            
+          }
+          if(prate<=0)
+          {
+            elm.innerHTML = "<b>Please enter Valid Property Rate</b>";
+            return;
+          }
+          if(pprice<=0)
+          {
+            elm.innerHTML = "<b>Please enter Valid Property Price</b>";
+            return;
+          }
+          if(pdeed=="")
+          {
+            elm.innerHTML = "<b>Please choose a file to proceed</b>";
+            return;
+          }
+          if(plat<-90 || plat>90)
+          {
+            elm.innerHTML = "<b>Please enter Valid Latitude</b>";
+            return;
+          }
+          if(plat<-180 || plat>180)
+          {
+            elm.innerHTML = "<b>Please enter Valid Latitude</b>";
+            return;
+          }
+
+        var message = await contractAddProperty();
+        //alert("stop2");
+        //var elm = document.getElementById("message");
+        //elm.innerHTML = "Added Property";
+        
+        elm.innerHTML = "<b>Property Listed Successfully</b>";
+        window.location.reload();
+    }
+    
+    const viewMyPropertyFunc = async() => {
+        
+        var json_arr = {};
+        var p = 0;
+        
+        var message = await contractViewMyPropertyList();
+        var table = $('#myTable').DataTable();
+        table.clear();
+        for(var i=0;i<message.length/5;i++)
+        {
+          
+          json_arr["pid"] = message[0+p];
+          //json_arr["pown"] = message[1+p];
+          json_arr["psize"] = message[2+p];
+          json_arr["ploc"] = message[3+p];
+          json_arr["pprice"] = message[4+p];
+          
+          //var table = document.getElementById("myTable");
+          
+          //div.style.textIndent = "450px";
+          //var row = table.insertRow(i+1);
+          var table = $('#myTable').DataTable();
+
+          var counter=1;
+          table.row.add( [
+            json_arr.pid,
+            //json_arr.pown,
+            json_arr.psize,
+            json_arr.ploc,
+            json_arr.pprice
+
+        ] ).draw( false );
+         // alert("here inserting");
+          
+
+          p=p+5;
+        }
+
+        showDiv();
+
+
+
+    }
+    const contractViewMyPropertyList_Listed = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            var i_prop_plotSize = await i_prop.plotSize;//change 2
+            var i_prop_location = await i_prop.location; //change 6
+            var i_prop_price = await i_prop.price; //change 7
+            var i_prop_sell= await i_prop.sell;
+            if (i_prop_owner === accountAddress && i_prop_sell == true)
+            {
+                prop_arr.push(i_prop.propId); //change 4
+                prop_arr.push(i_prop_owner); //change 5
+                prop_arr.push(i_prop_plotSize);//change 3
+                prop_arr.push(i_prop_location); //change 8
+                prop_arr.push(i_prop_price); //change 9
+
+            }
+          }
+
+          return prop_arr;
+    }
+    const contractViewMyPropertyList_Unlisted = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(contract_abi, contract_address);
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            var i_prop_plotSize = await i_prop.plotSize;//change 2
+            var i_prop_location = await i_prop.location; //change 6
+            var i_prop_price = await i_prop.price; //change 7
+            var i_prop_sell = await i_prop.sell;
+            if (i_prop_owner === accountAddress && i_prop_sell == false)
+            {
+                prop_arr.push(i_prop.propId); //change 4
+                prop_arr.push(i_prop_owner); //change 5
+                prop_arr.push(i_prop_plotSize);//change 3
+                prop_arr.push(i_prop_location); //change 8
+                prop_arr.push(i_prop_price); //change 9
+
+            }
+          }
+
+          return prop_arr;
+    }
+
+    const viewMyPropertyFuncListed = async() => {
+        //alert("wher");
+        var json_arr = {};
+        var p = 0;
+        
+        var message = await contractViewMyPropertyList_Listed();
+        var table = $('#myTable').DataTable();
+        table.clear();
+        for(var i=0;i<message.length/5;i++)
+        {
+          
+          json_arr["pid"] = message[0+p];
+          //json_arr["pown"] = message[1+p];
+          json_arr["psize"] = message[2+p];
+          json_arr["ploc"] = message[3+p];
+          json_arr["pprice"] = message[4+p];
+          
+          //var table = document.getElementById("myTable");
+          
+          //div.style.textIndent = "450px";
+          //var row = table.insertRow(i+1);
+          var table = $('#myTable').DataTable();
+
+          var counter=1;
+          table.row.add( [
+            json_arr.pid,
+            //json_arr.pown,
+            json_arr.psize,
+            json_arr.ploc,
+            json_arr.pprice
+
+        ] ).draw( false );
+         // alert("here inserting");
+          
+
+          p=p+5;
+        }
+        //alert("G");
+        showDiv();
+
+
+
+    }
+    const viewMyPropertyFuncUnlisted = async() => {
+        
+        var json_arr = {};
+        var p = 0;
+        
+        var message = await contractViewMyPropertyList_Unlisted();
+        var table = $('#myTableUL').DataTable();
+        table.clear();
+        for(var i=0;i<message.length/5;i++)
+        {
+          
+          json_arr["pid"] = message[0+p];
+          //json_arr["pown"] = message[1+p];
+          json_arr["psize"] = message[2+p];
+          json_arr["ploc"] = message[3+p];
+          json_arr["pprice"] = message[4+p];
+          
+          //var table = document.getElementById("myTable");
+          
+          //div.style.textIndent = "450px";
+          //var row = table.insertRow(i+1);
+          var table = $('#myTableUL').DataTable();
+
+          var counter=1;
+          table.row.add( [
+            json_arr.pid,
+            //json_arr.pown,
+            json_arr.psize,
+            json_arr.ploc,
+            json_arr.pprice
+
+        ] ).draw( false );
+         // alert("here inserting");
+          
+
+          p=p+5;
+        }
+
+        showDiv3();
+
+
+
+    }
+    const viewAllPropertyFunc = async() => {
+        //alert("here");
+        var json_arr = {};
+        var p = 0;
+        
+        var message = await contractViewAllPropertyList();
+        //alert(message);
+        var table = $('#myTable2').DataTable();
+        table.clear();
+        for(var i=0;i<message.length/5;i++)
+        {
+          
+          json_arr["pid"] = message[0+p];
+          json_arr["pown"] = message[1+p];
+          json_arr["psize"] = message[2+p];
+          json_arr["ploc"] = message[3+p];
+          json_arr["pprice"] = message[4+p];
+          
+          //var table = document.getElementById("myTable");
+          
+          //div.style.textIndent = "450px";
+          //var row = table.insertRow(i+1);
+          var table = $('#myTable2').DataTable();
+
+          var counter=1;
+          table.row.add( [
+            json_arr.pid,
+            json_arr.pown,
+            json_arr.psize,
+            json_arr.ploc,
+            json_arr.pprice
+
+        ] ).draw( false );
+         // alert("here inserting");
+          
+
+          p=p+5;
+        }
+
+        showDiv2();
+    }
+
+</script>
+
+
+<style>
+  .myTable {
+ 
+  margin-left: auto;
+  margin-right: auto;
+
+}
+.container{
+  width: 100%;
+}
+#mytable2{
+  width: 100%;
+}
+#myVideo {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%; 
+  min-height: 100%;
+}
+
+.content {
+  display: inline-block;
+  position: absolute;
+  left: 30%;
+  top:10%;
+  
+  color: #f1f1f1;
+  width: 100%;
+  padding: 20px;
+  
+}
+#dispid {
+  display: inline-block;
+  position: absolute;
+  left: 35%;
+  top:10%;
+  font-family: 'Roboto Slab', serif;
+  color: #f1f1f1;
+  font-weight: bold;
+  padding: 20px;
+  
+}
+#dispid1 {
+  display: inline-block;
+  position: absolute;
+  left: 34%;
+  top:10%;
+  font-family: 'Roboto Slab', serif;
+  color: #f1f1f1;
+  font-weight: bold;
+  padding: 20px;
+  
+}
+#dispid2 {
+  display: inline-block;
+  position: absolute;
+  left: 38%;
+  top:10%;
+  font-family: 'Roboto Slab', serif;
+  color: #f1f1f1;
+  font-weight: bold;
+  padding: 20px;
+  
+}
+.dataTables_length label {
+   color: white;
+}
+.dataTables_filter label {
+   color: white;
+}
+#myTableUL_info{
+  color: white;
+}
+#myTableUL_previous{
+  color: white;
+}
+#myTableUL_next{
+  color: white;
+}
+#myTable_info{
+  color: white;
+}
+#myTable_previous{
+  color: white;
+}
+#myTable_next{
+  color: white;
+}
+#myTable2_info{
+  color: white;
+}
+#myTable2_previous{
+  color: white;
+}
+#myTable2_next{
+  color: white;
+}
+#dispid{
+  width:100%;
+}
+
+
+  </style>
+  <script>
+function showDiv() {
+  //alert("here");
+   document.getElementById('mytable').style.display = "block";
+   document.getElementById('dispid1').style.display = "block";
+   
+   document.getElementById('contentid').style.display = "none";
+   document.getElementById('main').style.display = "none";
+   document.getElementById('mytable2').style.display = "none";
+   document.getElementById('mytableUL').style.display = "none";
+   document.getElementById('dispid2').style.display = "none";
+   document.getElementById('dispid').style.display = "none";
+
+}
+function showDiv2() {
+   document.getElementById('mytable2').style.display = "block";
+   document.getElementById('dispid2').style.display = "block";
+   document.getElementById('contentid').style.display = "none";
+   document.getElementById('main').style.display = "none";
+   document.getElementById('mytable').style.display = "none";
+   document.getElementById('mytableUL').style.display = "none";
+   document.getElementById('dispid').style.display = "none";
+   document.getElementById('dispid1').style.display = "none";
+
+}
+function showDiv3() {
+  //alert("her");
+   document.getElementById('mytableUL').style.display = "block";
+   document.getElementById('dispid').style.display = "block";
+   document.getElementById('contentid').style.display = "none";
+   document.getElementById('main').style.display = "none";
+   document.getElementById('mytable').style.display = "none";
+   document.getElementById('mytable2').style.display = "none";
+   document.getElementById('dispid1').style.display = "none";
+   document.getElementById('dispid2').style.display = "none";
+
+}
+
+
+const set_selling_price = async() => {
+  //alert("clicked once");
+  var propId = document.getElementById("hiddenid").value;
+  var selling_price=document.getElementById("spid").value;
+  const account = await web3.eth.getAccounts();
+  var accountAddress = await account[0];
+  contract = new web3.eth.Contract(contract_abi, contract_address);
+  var i_prop = await contract.methods.propList(propId).call();
+  //alert(i_prop.list);
+  
+  //alert("Im here");
+  await contract.methods.listProperty(propId, selling_price).send({from:accountAddress});
+  //alert("Changed list to true");
+  window.location.reload();
+
+
+
+}
+
+
+function come(targets){
+  alert("heyya");
+
+}
+</script>
+<script>
+  function show(){
+    //alert("here");
+    console.log("button clicked");
+    var lat=document.getElementById("lat").value;
+    var lon=document.getElementById("lon").value;
+    //alert(lat);
+    //alert(lon);
+      var url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}`;
+      
+      $.getJSON(url, function (data) {
+        var res="";
+        res+=data.locality;
+        res+=",";
+        res+=data.principalSubdivision;
+        res+=",";
+        res+=data.countryName;
+        console.log(res);
+        document.getElementById("ploc").value=res;
+      });
+  }
+  </script>
+</head>
+<body>
+  <div class="background-wrap">
+      <video autoplay muted loop id="myVideo">
+  <source src="video.mp4" type="video/mp4">
+  Your browser does not support HTML5 video.
+</video>
+ <div class="disp" id="dispid" style="display: none;"><h2 style="color:white;">Properties not listed for sale</h2></div>
+ <div class="disp1" id="dispid1" style="display: none;"><h2 style="color:white;">Properties listed for sale</h2></div>
+ <div class="disp2" id="dispid2" style="display: none;"><h2 style="color:white;">Buy Property</h2></div>
+<div class="content" id="contentid">
+ 
+    <h2 id="main"><center><font color="white"><b>List your property for sale</b></font></center></h2>
+   <form name="frm1" id="form" >
+  <div class="form-group">
+    <label for="sizeid">Property Size</label>
+    <input type="numeric" name="psize" class="form-control" id="sizeid" aria-describedby="emailHelp" placeholder="Enter Property Size in square feet">
+  </div>
+
+  <div class="form-group">
+    <label for="rateid">Property Rate</label>
+    <input type="numeric" name="prate" class="form-control" id="rateid" aria-describedby="emailHelp" placeholder="Enter Property Rate per square feet">
+  </div>
+  <div class="form-group">
+    <label for="priceid">Property Price</label>
+    <input type="numeric" name="pprice" class="form-control" id="priceid" aria-describedby="emailHelp" placeholder="Enter Property Price in ether">
+  </div>
+  <div class="form-group">
+    <label for="deedid">Property Deed Papers</label>
+    <input type="file" id="actual-btn" size="20" onchange="onFileUploadFunc(this)" id="file1"/>
+    
+  </div>
+  <div class="form-group">
+    <label for="lat">Location</label>
+    <input type="name" name="lat" class="form-control" id="lat" aria-describedby="emailHelp" placeholder="Enter latitude">
+    <input type="name" name="lon" class="form-control" id="lon" aria-describedby="emailHelp" placeholder="Enter longitude">
+  </div>
+  <div class="form-group"><center>
+    <input type="button" name="geo" class="btn btn-primary" id="exampleInputEmail1" aria-describedby="emailHelp" value="Reverse Geocode" onclick="show()"></center>
+  </div>
+  <div class="form-group">
+    <label for="ploc">Area</label>
+    <input type="email" class="form-control" id="ploc" aria-describedby="emailHelp" placeholder="Area" >
+  </div>
+  <div class="form-group">
+    <center>
+    <input type="button" class= "btn btn-primary" data-toggle="modal" data-target="#exampleModal" value="Add Property" onclick="addPropertyFunc()"></center>
+  </div>
+</form>
+
+
+  
+</div>
+</div>
+  <nav class="navbar navbar-dark navbar-expand-lg" style="background-color: #054f9e;">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="#">MyP</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                  <a class="nav-link" aria-current="page" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" aria-current="page" href="add_details.html">Add Property</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" aria-current="page" href="#" onclick="viewAllPropertyFunc()">Buy Property</a>
+                </li>
+    
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Owned Properties
+                  </a>  
+                  <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdown">
+                      <a class="dropdown-item" href="#" onclick="viewMyPropertyFuncUnlisted()">Not For Sale</a>
+                      <a class="dropdown-item" href="#" onclick="viewMyPropertyFuncListed()">For Sale</a>
+                  </div>
+                </li>
+          </div>
+        </nav>
+    <!--<div id="message"></div>-->
+    
+    
+    
+     
+        
+<br>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Status</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="addpropmodalid">
+        <b>In Progress...</b>
+      </div>
+      <!--<div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>-->
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="exampleModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Status</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="buypropmodalid">
+        <b>In Progress...</b>
+      </div>
+      <!--<div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>-->
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="exampleModal3" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Enter Selling Price</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="listing_modal">
+        <input type="numeric" id="spid">
+        <input type="numeric" id="hiddenid" style="display: none;">
+        <input type="button" class="btn btn-dark" value="Submit" onclick="set_selling_price()">
+      </div>
+      <!--<div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>-->
+    </div>
+  </div>
+</div>
+<div class= "container" align= "left" id="mytable" style="display:none;">
+  
+  <br>
+  <br>
+
+  <h2><center><b>Properties listed for sale</b></center></h2>
+  <center>  <table class="table table-fluid" id="myTable" align="left"></center>
+    <thead>
+    <tr style="color:white;"><th><center>Property ID</center></th><th><center>Property Size</center></th><th><center>Property Location</center></th><th><center>Property Price</center></th><th><center>View Deed</center></th></th></tr>
+    </thead>
+    <tbody>
+  
+    </tbody>
+    </table>
+  
+</div>
+
+<script>
+
+    $(document).ready( function () {
+        var table = $('#myTable').DataTable({
+
+          columnDefs: [{
+            targets: [0,1,2,3,4],
+            className: 'text-center'
+          },
+          
+          {
+            targets: [4],
+            defaultContent: '<button id=\"test2\" class= "btn btn-dark" data-toggle="modal" data-bmdWidth="640" data-bmdHeight="480" data-target="#myModal"  data-bmdVideoFullscreen="true" >View Deed</button>'
+            //alert(table.row( 0 ).data()[0]);
+
+          },
+          
+          { orderable: false, 
+            targets: [4] },
+            
+          
+          ]
+        });
+
+
+
+        /*$('#myTable').on( 'click', 'tr button', function () {
+          alert("Heyyou");
+        var data = table.row( $(this) ).data();
+        getPropDeedFunc(data[0]);
+        //alert(data[0]);*/
+        $('#myTable').on( 'click', 'tr button', function () {
+
+            var action = this.id;
+
+            if (action === "test2")
+            {
+                var data = table.row( $(this).parents('tr') ).data();
+                getPropDeedFunc(data[0]);
+            }
+            else
+            {
+                var data = table.row( $(this).parents('tr') ).data();
+                ListFunc(data[0]);
+                //$("#listbutid").click(function(){
+                    //alert("You have clicked list button");
+                    //$(this).attr("disabled", true);
+                  //  return true;
+                    //$(this).attr("value", "true");
+
+                //});
+            }
+
+        } );
+        /*$('#myTable tbody').on( 'click', 'td button', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        alert("data value");
+        alert(data[0]);
+        ListFunc(data[0]);*/
+
+
+    
+        } );
+        
+</script>
+<div class= "container" align= "left" id="mytableUL" style="display:none;">
+  
+  <br>
+  <br>
+  <div><h2><center>Properties not listed for sale</center></h2></div>
+  
+  <center>  <table class="table table-fluid" id="myTableUL" align="left"></center>
+    <thead>
+    <tr style="color:white;"><th ><center>Property ID</center></th><th><center>Property Size</center></th><th><center>Property Location</center></th><th><center>Property Price</center></th><th><center>View Deed</center></th></th><th><center>List Property for Sale</center></th></tr>
+    </thead>
+    <tbody>
+  
+    </tbody>
+    </table>
+  
+</div>
+<script>
+
+    $(document).ready( function () {
+        var table = $('#myTableUL').DataTable({
+
+          columnDefs: [{
+            targets: [0,1,2,3,4,5],
+            className: 'text-center'
+          },
+          
+          {
+            targets: [4],
+            defaultContent: '<button id=\"test2\" class= "btn btn-dark" data-toggle="modal" data-bmdWidth="640" data-bmdHeight="480" data-target="#myModal"  data-bmdVideoFullscreen="true" >View Deed</button>'
+            //alert(table.row( 0 ).data()[0]);
+
+          },
+          {
+            targets: [5],
+            defaultContent: '<button id=\"listbutid\" class= "btn btn-dark" data-toggle="modal" data-target="#exampleModal3">List for Sale</button>'
+            //alert(table.row( 0 ).data()[0]);
+
+          },
+          
+          { orderable: false, 
+            targets: [4] },
+            { orderable: false, 
+            targets: [5] },
+            
+            
+          
+          ]
+        });
+
+
+
+        /*$('#myTable').on( 'click', 'tr button', function () {
+          alert("Heyyou");
+        var data = table.row( $(this) ).data();
+        getPropDeedFunc(data[0]);
+        //alert(data[0]);*/
+        $('#mytableUL').on( 'click', 'tr button', function () {
+
+            var action = this.id;
+
+            if (action === "test2")
+            {
+                var data = table.row( $(this).parents('tr') ).data();
+                getPropDeedFunc(data[0]);
+            }
+            else
+            {
+                var data = table.row( $(this).parents('tr') ).data();
+                ListFunc(data[0]);
+                //$("#listbutid").click(function(){
+                    //alert("You have clicked list button");
+                    //$(this).attr("disabled", true);
+                  //  return true;
+                    //$(this).attr("value", "true");
+
+                //});
+            }
+
+        } );
+        /*$('#myTable tbody').on( 'click', 'td button', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        alert("data value");
+        alert(data[0]);
+        ListFunc(data[0]);*/
+
+
+    
+        } );
+        
+</script>
+<script>
+      const getPropDeedFunc = async(propId) => {
+        //alert("inside getPropdeed");
+        var message = await contractGetPropDeed(propId);
+        var elm = document.getElementById("message");
+
+        var propImg = document.getElementById("propDeedImgId");
+
+
+        if (message === "Not Available")
+        {
+            //alert("Not Available");
+        }
+        else
+        {
+            propImg.src = "https://ipfs.io/ipfs/" + message;
+
+
+            console.info(propImg.src);
+        }
+
+        
+    }
+    const ListFunc = async(propId) => {
+      //alert("Inside ListFunc");
+          //var message = await contractBuyProperty(propId);
+          //alert("model before start");
+          var elm = document.getElementById("listing_modal");
+          document.getElementById("hiddenid").value=propId;
+          //alert("model after start");
+          //alert(document.getElementById("hiddenid").value);
+          /*var selling_price=prompt("Please enter the price at which you want to sell your property");
+          if(selling_price==null)
+          {
+            return;
+          }*/
+          
+      
+    }
+</script>
+
+<div class= "container" align= "left" id="mytable2" style="display:none;">
+  
+  <br>
+  <br>
+  <h2><center><b>Buy Property</b></center></h2>
+  <center>  <table class="table table-fluid" id="myTable2" align="left"></center>
+    <thead>
+    <tr style="color:white;"><th><center>Property ID</center></th><th><center>Property Owner</center></th><th><center>Property Size</center></th><th><center>Property Location</center></th><th><center>Property Price</center></th><th><center>Buy Property</center></th></tr>
+    </thead>
+    <tbody>
+  
+    </tbody>
+    </table>
+  
+</div>
+<script>
+    const buyPropertyFunc = async(propId) => {
+        var message = await contractBuyProperty(propId);
+        var elm = document.getElementById("buypropmodalid");
+        elm.innerHTML = "<b>Property Bought</b>";
+        window.location.reload();
+
+        //alert("Bought Property");
+
+    }
+
+    $(document).ready( function () {
+        var table = $('#myTable2').DataTable({
+          columnDefs: [{
+            targets: [0,1,2,3,4,5],
+            className: 'text-center'
+          },
+          {
+            targets: [5],
+            defaultContent: '<button class= "btn btn-dark" data-toggle="modal" data-target="#exampleModal2">Buy Now</button>'
+          },
+          { orderable: false, 
+            targets: [5] }
+          
+          ]
+        });
+
+
+        $('#myTable2 tbody').on( 'click', 'button', function () {
+        var data = table.row( $(this).parents('tr') ).data();
+        buyPropertyFunc(data[0]);
+        //alert(data[0]);
+
+
+    } );
+        } );
+      
+</script>
+
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog" id="modaldialogid">
+      <div class="modal-content bmd-modalContent">
+
+        <div class="modal-body">
+          
+          <div class="close-button">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="embed-responsive embed-responsive-16by9">
+                      <iframe id="propDeedImgId" frameborder="0" width="200" height="200"></iframe>
+          </div>
+        </div>
+
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+<script>
+
+</script>
+</body>
+</html>

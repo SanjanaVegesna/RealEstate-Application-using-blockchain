@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MyProperty</title>
+  <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script>
+  <script language="javascript" type="text/javascript" src="./abi.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
+  
+  <script>
+    var contract_address;
+    var contract_abi;
+
+    window.ethereum.on('accountsChanged', function (accounts) {
+  // Time to reload your interface with accounts[0]!
+      //alert("detected change in metamask account");
+      window.location.reload();
+    })
+
+
+     window.addEventListener('load', async () => {
+    // Modern dapp browsers...
+    if (window.ethereum) {
+      window.web3 = new Web3(ethereum);
+      try {
+        // Request account access if needed
+        await ethereum.enable();
+        const account = await web3.eth.getAccounts();
+        const accountAddress = await account[0];
+
+
+        var xobj = await new XMLHttpRequest();
+        await xobj.overrideMimeType("application/json");
+        await xobj.open('GET', './PropertyList.json', false);
+        await xobj.send();
+
+        var contract_json = JSON.parse(xobj.responseText);
+        console.info(contract_json);
+
+        var contract_net = contract_json['networks'];
+
+        var net_keys = [];
+
+        for (var k in contract_net)
+        {
+            net_keys.push(k);
+        }
+
+        contract_address = contract_net[net_keys[net_keys.length-1]]['address'];
+        console.info(contract_address);
+        contract_abi = contract_json['abi'];
+        console.info(contract_abi);
+      } catch (error) {
+        // User denied account access...
+      }
+    }
+    // Non-dapp browsers...
+    else {
+      console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+    }
+  });
+  </script>
+  <script>
+      const ipfs = window.IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001 })
+
+    var fileHash = "";
+
+    const onFileUploadFunc = async (evt) => {
+        var file = evt.files[0];
+        console.info(file);
+
+        const buffer = await file.arrayBuffer();
+        console.info(buffer);
+        //alert(ret);
+       // var data = ret.result;
+
+
+        Buffer = window.IpfsApi().Buffer;
+
+        const buf = Buffer.from(buffer);
+        console.info(buf);
+        const files = [
+          {
+            path: file.name,
+            content:buf
+
+          }
+        ]
+
+        const files1 = [
+          {
+            path: file.name,
+            content:buffer
+
+          }
+        ]
+
+        //ret = await ipfs.add(files);
+        ret = await ipfs.add(files1);
+        console.info(ret['cid']['string']);
+        fileHash = await ret['cid']['string'];
+
+
+        console.info("finished")
+
+    }
+    var contract;
+    const contractAddress = "0x53F4666262161C235F4e7fE895370bcb07A3EA48";
+
+    const contractAddProperty = async () => {
+          var psize = document.forms["frm1"]["psize"].value;
+          var ploc = document.forms["frm1"]["ploc"].value;
+          var pprice = document.forms["frm1"]["pprice"].value;
+          var pdeed = document.forms["frm1"]["pdeed"].value;
+          let pdeedfile = document.forms["frm1"]["pdeedfile"].value;
+
+          const account = await web3.eth.getAccounts();
+          const accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(abi, contractAddress);
+          let message = await contract.methods.addProperty(psize, ploc, pprice, pdeed).send({from:accountAddress});
+          return message;
+    }
+
+    const contractViewMyPropertyList = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(abi, contractAddress);
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            if (i_prop_owner === accountAddress)
+            {
+                prop_arr.push(i_prop.propId);
+                prop_arr.push(i_prop_owner);
+            }
+          }
+
+          return prop_arr;
+    }
+
+
+    const contractViewAllPropertyList = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(abi, contractAddress);
+          var propCount = await contract.methods.propCount().call();
+
+          var itr;
+          var prop_arr = [];
+
+          for (itr = 1; itr <= propCount; itr++)
+          {
+            var i_prop = await contract.methods.propList(itr).call();
+            var i_prop_owner = await i_prop.owner;
+            if (!(i_prop_owner === accountAddress))
+            {
+                prop_arr.push(i_prop.propId);
+                prop_arr.push(i_prop_owner);
+            }
+          }
+
+          return prop_arr;
+    }
+
+
+    const contractBuyProperty = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(abi, contractAddress);
+          var propId = document.forms["frm3"]["propId"].value;
+
+          var i_prop = await contract.methods.propList(propId).call();
+          var i_price = await i_prop.price;
+          var i_prop_owner = await i_prop.owner;
+
+
+          let message = await contract.methods.buyProperty(propId).send({from:accountAddress, value:web3.utils.toWei(String(i_price), 'ether'), to:i_prop_owner});
+
+          //let message = await contract.methods.buyProperty(propId).send({from:accountAddress});
+
+          return "Bought Property";
+    }
+
+    const contractGetPropDeed = async () => {
+
+          const account = await web3.eth.getAccounts();
+          var accountAddress = await account[0];
+
+          contract = new web3.eth.Contract(abi, contractAddress);
+          var propId = document.forms["frm5"]["pid"].value;
+
+          var i_deed_val = await contract.methods.getPropertyDeedById(propId).call({from:accountAddress});
+
+          //let message = await contract.methods.buyProperty(propId).send({from:accountAddress});
+
+          return i_deed_val;
+    }
+
+    const addPropertyFunc = async() => {
+        var message = await contractAddProperty();
+        var elm = document.getElementById("message");
+        elm.innerHTML = "Added Property";
+    }
+
+    const viewAllPropertyFunc = async() => {
+        var message = await contractViewAllPropertyList();
+        var elm = document.getElementById("message");
+        elm.innerHTML = message;
+    }
+
+    const viewMyPropertyFunc = async() => {
+        var message = await contractViewMyPropertyList();
+        var elm = document.getElementById("message");
+        elm.innerHTML = message;
+    }
+
+    const buyPropertyFunc = async() => {
+        var message = await contractBuyProperty();
+        var elm = document.getElementById("message");
+        elm.innerHTML = message;
+    }
+
+    const getPropDeedFunc = async() => {
+        var message = await contractGetPropDeed();
+        var elm = document.getElementById("message");
+        elm.innerHTML = message;
+    }
+
+ 
+
+  </script>
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.8/css/all.css">
+<link href="https://fonts.googleapis.com/css2?family=Train+One&display=swap" rel="stylesheet">
+  <style>
+      body
+      {
+        font-family: sans-serif;
+      }
+      .jumbotron
+      {
+          
+          text-align: center;
+          height: 100%;
+         
+      }
+      
+      hr {
+  margin-top: 100px;
+  margin-bottom: 15px;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.card {
+        margin:0 auto; /* Added */
+        margin-top: 20px;
+        float: none; /* Added */
+        margin-bottom: 30px; /* Added */
+        top: 20%;
+       
+       
+}
+
+.navbar a{
+    font-family: Lato,sans-serif !important;
+
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+#card_sec
+{
+ background-color: rgb(230,230,250);
+}
+#btn1
+{
+    margin-top: 25px;
+    margin-bottom: 30px;
+}
+#btn2
+{
+    margin-top: 0px;
+    margin-bottom: 30px;
+}
+
+#footer {
+  bottom: 0;
+  background:rgba(0, 0, 0, 0.5);
+  color: white;
+  text-align: center;
+}
+.background-wrap {
+            position: fixed;
+            z-index: -1000;
+            width: 100%;
+            height: 90%;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+        }
+.jumbotron { background-size: auto 100%; }
+.ml9 {
+  
+  
+  font-size: 4em;
+}
+
+.ml9 .text-wrapper {
+
+  margin-top: 25%;
+  margin-left: 35%;
+ 
+  overflow: hidden;
+  
+}
+
+.ml9 .letter {
+  transform-origin: 50% 100%;
+  display: inline-block;
+  
+  font-size: 1em;
+  font-family: Train one;
+  color: white;
+
+
+}
+.ml12 {
+  font-weight: 200;
+  font-size: 2.1em;
+  
+  
+}
+
+.ml12 .letter {
+  display: inline-block;
+  line-height: 1em;
+  
+}
+* {
+  box-sizing: border-box;
+}
+.row{
+  bottom: 
+
+
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+
+#myVideo {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%; 
+  min-height: 100%;
+}
+
+.content {
+  display: inline-block;
+  position: absolute;
+  top: 26%;
+  left: 44%;
+  
+  color: #f1f1f1;
+  width: 100%;
+  padding: 20px;
+  
+}
+
+
+#myBtn {
+  width: 200px;
+  font-size: 18px;
+  padding: 10px;
+  border: none;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+}
+
+#myBtn:hover {
+  background: #ddd;
+  color: black;
+}
+.flex-container {
+
+    display: flex;
+}
+
+.flex-child {
+    flex: 1;
+    border: 2px solid yellow;
+}  
+
+.flex-child:first-child {
+    margin-right: 20px;
+} 
+.mycontent{
+  bottom: 0;
+}
+.grid-container{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
+}
+
+
+  </style>
+</head>
+
+<body>
+
+        
+
+    
+
+    
+      <div class="background-wrap">
+      <video autoplay muted loop id="myVideo">
+  <source src="video.mp4" type="video/mp4">
+  Your browser does not support HTML5 video.
+</video>
+</div>
+<div class="content">
+
+  <!--<input type=button class="btn btn-primary" style="background-color: #054f9e;" value="Learn More" ></input>-->
+
+  
+</div>
+
+<nav class="navbar navbar-dark navbar-expand-lg" style="background-color: #054f9e;">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="#">MyP</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"  >
+                  <a class="nav-link" aria-current="page"  href="#">Home</a>
+                </li>
+                <li class="nav-item" >
+                  <a class="nav-link" href="#Explore">Explore</a>
+                </li>
+                
+              </ul>
+          </div>
+        </div>
+        </nav>
+        <br>
+
+
+<div class="mycontent">
+  <h1 class="ml9">
+  <span class="text-wrapper">
+    <span class="letters">MyProperty</span>
+
+  </span>
+</h1>
+
+  
+</div>
+
+<script>
+var video = document.getElementById("myVideo");
+var btn = document.getElementById("myBtn");
+
+function myFunction() {
+  if (video.paused) {
+    video.play();
+    btn.innerHTML = "Pause";
+  } else {
+    video.pause();
+    btn.innerHTML = "Play";
+  }
+}
+</script>
+
+      
+      
+      
+      
+      <div class="grid-container">
+        
+          <div class="card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%,rgba(255,255,255,0.9) 100%), url(house4.jpg) ; width: 26rem; height:15rem">
+            <div class="card-body" style="font-family: 'Roboto Slab', serif; font-weight: bold;">
+              <h5 class="card-title"><center><b><h5>SELL</b></h5></center></h5>
+              <p class="card-text" ><center><h6>Sell your properties at our website with great ease. You can easily list a property for sale by adding required details.</h6></center>
+              <center><a href="add_details.html" class="btn btn-primary" style="background-color: #054f9e;" id="btn1">Sell Property</a></center></p>
+            </div>
+          
+        </div>
+        
+          <div class="card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%,rgba(255,255,255,0.9) 100%), url(house4.jpg) ; width: 26rem; height:15rem">
+            <div class="card-body" style="font-family: 'Roboto Slab', serif; font-weight: bold;">
+              <h5 class="card-title"><center><b><h5>BUY</b></h5></center></h5>
+              <p class="card-text" ><center><h6>Buy properties from all over the world with great ease. A bought property can be listed for sale again, with a single click.</h6></center>
+              <center><a href="search_prop.html" class="btn btn-primary" style="background-color: #054f9e;" id="btn1">Buy Property</a></center></p>
+            </div>
+            <!--
+          <div class="card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%,rgba(255,255,255,0.9) 100%), url(house4.jpg); width: 26rem;  height:17rem">
+            <div class="card-body" style="font-family: 'Roboto Slab', serif; font-weight: bold;">
+              <h5 class="card-title"><center><b><h3>BUY</b></h3></center></h5>
+              <p class="card-text"><center><h4>Buy properties from all over the country with great ease. A bought property can be listed for sale again, with a single click.</h4></center></p>
+              <center><a href="search_prop.html" class="btn btn-primary" style="background-color: #054f9e;" id="btn1">Buy Property</a></center>
+            </div>-->
+          
+        </div>
+
+      </div>
+      <br><br><br><br><br><br><br>
+      <div class="card" style="background-image: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%,rgba(255,255,255,0.9) 100%), url(house4.jpg); width: 50rem;  height:22rem">
+            <div class="card-body" id="Explore" style="font-family: 'Roboto Slab', serif; font-weight: bold;">
+              <h3 class="card-title"><center><b><h5>MyProperty</b></h5></center></h3>
+              <p class="card-text"><center><h6><p>MyProperty powered by ethereum smart contracts, provides you with unbreachable secure digital platform for all your property related transactions. MyProperty  performs all the transactions via metamask.</p><p><p><b> Want to list a property for sale?</b></p> Aye!!
+Listing a property for sale requires you to submit few important property related information. Thats All. No Brokers. No Delays. All in matter of minutes.</p><p><p><b> Want to buy a property?</b></p> Aye!!
+You can go through all the listed properties and buy the properties that you like. Once the buy transaction completes, you are provided the access to the property deed. The newly owned properties are by default unlisted from sale. You can later add them back as and when required.</p></h6></center></p>
+              
+            </div>
+          
+        </div>
+      <br><br><br><br>
+      <div class="footerclass" style="background: rgba(0, 0, 0, 0.5);">
+      <footer class="bg-dark text-center text-white" id="footer">
+    <!-- Grid container -->
+    
+      <!-- Section: Social media -->
+      
+      <!-- Section: Social media -->
+
+      <!-- Section: Form -->
+      
+      <!-- Section: Form -->
+  
+      <!-- Section: Text -->
+      
+      <!-- Section: Text -->
+  
+      <!-- Section: Links -->
+      
+      <!-- Section: Links -->
+    
+    <!-- Grid container -->
+  
+    <!-- Copyright -->
+    <div class="text-center p-3" style="background: rgba(0, 0, 0, 0.5);">
+      
+      <a class="text-white" href="#">MyProperty.com</a>
+    </div>
+    <!-- Copyright -->
+  </footer>
+        
+    </div>
+      
+
+  
+  <!-- Footer -->
+
+  <!-- Footer -->
+  <script>
+    var textWrapper = document.querySelector('.ml9 .letters');
+textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
+
+anime.timeline({loop: false})
+  .add({
+    targets: '.ml9 .letter',
+    scale: [0, 1],
+    duration: 1500,
+    elasticity: 600,
+    delay: (el, i) => 45 * (i+1)
+  });
+  </script>
+  <script>
+    var textWrapper = document.querySelector('.ml12');
+textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
+
+anime.timeline({loop: true})
+  .add({
+    targets: '.ml12 .letter',
+    translateX: [40,0],
+    translateZ: 0,
+    opacity: [0,1],
+    easing: "easeOutExpo",
+    duration: 1200,
+    delay: (el, i) => 500 + 30 * i
+  }).add({
+    targets: '.ml12 .letter',
+    translateX: [0,-30],
+    opacity: [1,0],
+    easing: "easeInExpo",
+    duration: 1100,
+    delay: (el, i) => 100 + 30 * i
+  });
+  </script>
+
+</body>
+</html>
